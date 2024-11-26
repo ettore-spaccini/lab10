@@ -1,15 +1,20 @@
 package it.unibo.mvc;
 
+import java.io.BufferedReader;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.List;
+import java.util.StringTokenizer;
 
 /**
  */
 public final class DrawNumberApp implements DrawNumberViewObserver {
-    private static final int MIN = 0;
-    private static final int MAX = 100;
-    private static final int ATTEMPTS = 10;
+    private static final String MINIMUM = "minimum";
+    private static final String MAXIMUM = "maximum";
+    private static final String CASE_ATTEMPTS = "attempts";
+    private static final int ARGUMENTS_NUMBER = 2; 
 
     private final DrawNumber model;
     private final List<DrawNumberView> views;
@@ -18,7 +23,7 @@ public final class DrawNumberApp implements DrawNumberViewObserver {
      * @param views
      *            the views to attach
      */
-    public DrawNumberApp(final DrawNumberView... views) {
+    public DrawNumberApp(final String file, final DrawNumberView... views) {
         /*
          * Side-effect proof
          */
@@ -27,7 +32,52 @@ public final class DrawNumberApp implements DrawNumberViewObserver {
             view.setObserver(this);
             view.start();
         }
-        this.model = new DrawNumberImpl(MIN, MAX, ATTEMPTS);
+        final Configuration.Builder confBuilder = new Configuration.Builder();
+        try (
+            BufferedReader inputFile = new BufferedReader(new InputStreamReader(ClassLoader.getSystemResourceAsStream(file)))
+        ) {
+            String line; 
+            while((line = inputFile.readLine()) != null) {
+                StringTokenizer tokenizer = new StringTokenizer(line, ":");
+                if (tokenizer.countTokens() == ARGUMENTS_NUMBER) {
+                    final var valueType= tokenizer.nextToken().trim(); 
+                    final var value = tokenizer.nextToken().trim();
+                    switch (valueType) {
+                        case MINIMUM: 
+                            confBuilder.setMin(Integer.parseInt(value));
+                            break; 
+                        case MAXIMUM: 
+                            confBuilder.setMax(Integer.parseInt(value));
+                            break; 
+                        case CASE_ATTEMPTS:
+                            confBuilder.setAttempts(Integer.parseInt(value));
+                            break; 
+                        default:
+                            displayError("Unexpected strings in reading");
+                            break; 
+                    }
+                }
+            }
+        } catch(final IOException e) {
+            displayError(e.getMessage());
+        }
+        final Configuration configuration = confBuilder.build(); 
+        if (configuration.isConsistent()) {
+            this.model = new DrawNumberImpl(configuration); 
+        } else {
+            displayError("The inizialization values are not valid: "
+                + "min: " + configuration.getMin() + ", "
+                + "max: " + configuration.getMax() + ", "
+                + "attempts: " + configuration.getAttempts() + ". The default ones will be used"
+            );
+            this.model = new DrawNumberImpl(new Configuration.Builder().build());
+        }
+    }
+
+    private void displayError(final String err) {
+        for (final DrawNumberView view: views) {
+            view.displayError(err);
+        }
     }
 
     @Override
@@ -66,7 +116,11 @@ public final class DrawNumberApp implements DrawNumberViewObserver {
      * @throws FileNotFoundException 
      */
     public static void main(final String... args) throws FileNotFoundException {
-        new DrawNumberApp(new DrawNumberViewImpl());
+        new DrawNumberApp("config.yml", 
+                new DrawNumberViewImpl(),
+                new DrawNumberViewImpl(), 
+                new PrintStreamView(System.out),       
+                new PrintStreamView("output.log"));
     }
 
 }
