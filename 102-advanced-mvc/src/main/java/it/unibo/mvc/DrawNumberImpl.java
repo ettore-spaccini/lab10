@@ -1,7 +1,5 @@
 package it.unibo.mvc;
-
 import java.util.Random;
-
 /**
  *
  */
@@ -15,6 +13,7 @@ public final class DrawNumberImpl implements DrawNumber {
     private final Random random = new Random();
 
     /**
+     * @param configuration
      * @throws IllegalStateException if the configuration is not consistent
      */
     public DrawNumberImpl(final Configuration configuration) {
@@ -50,5 +49,4 @@ public final class DrawNumberImpl implements DrawNumber {
         }
         return DrawResult.YOU_WON;
     }
-
 }

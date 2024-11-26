@@ -4,9 +4,13 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.StringTokenizer;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  */
@@ -20,8 +24,8 @@ public final class DrawNumberApp implements DrawNumberViewObserver {
     private final List<DrawNumberView> views;
 
     /**
+     * @param file
      * @param views
-     *            the views to attach
      */
     public DrawNumberApp(final String file, final DrawNumberView... views) {
         /*
@@ -34,13 +38,14 @@ public final class DrawNumberApp implements DrawNumberViewObserver {
         }
         final Configuration.Builder confBuilder = new Configuration.Builder();
         try (
-            BufferedReader inputFile = new BufferedReader(new InputStreamReader(ClassLoader.getSystemResourceAsStream(file)))
+            BufferedReader inputFile = new BufferedReader(new InputStreamReader(
+                ClassLoader.getSystemResourceAsStream(file), StandardCharsets.UTF_8))
         ) {
-            String line; 
-            while((line = inputFile.readLine()) != null) {
-                StringTokenizer tokenizer = new StringTokenizer(line, ":");
+            String line = inputFile.readLine();
+            while (Objects.nonNull(line)) {
+                final StringTokenizer tokenizer = new StringTokenizer(line, ":");
                 if (tokenizer.countTokens() == ARGUMENTS_NUMBER) {
-                    final var valueType= tokenizer.nextToken().trim(); 
+                    final var valueType = tokenizer.nextToken().trim(); 
                     final var value = tokenizer.nextToken().trim();
                     switch (valueType) {
                         case MINIMUM: 
@@ -57,8 +62,9 @@ public final class DrawNumberApp implements DrawNumberViewObserver {
                             break; 
                     }
                 }
+                line = inputFile.readLine();
             }
-        } catch(final IOException e) {
+        } catch (final IOException e) {
             displayError(e.getMessage());
         }
         final Configuration configuration = confBuilder.build(); 
@@ -89,7 +95,7 @@ public final class DrawNumberApp implements DrawNumberViewObserver {
             }
         } catch (IllegalArgumentException e) {
             for (final DrawNumberView view: views) {
-                view.numberIncorrect();
+                view.displayError(e.getMessage());
             }
         }
     }
@@ -100,6 +106,10 @@ public final class DrawNumberApp implements DrawNumberViewObserver {
     }
 
     @Override
+    @SuppressFBWarnings(
+        value = { "DM_EXIT" },
+        justification = "Excercise is designed in this way"
+    )
     public void quit() {
         /*
          * A bit harsh. A good application should configure the graphics to exit by
@@ -118,9 +128,9 @@ public final class DrawNumberApp implements DrawNumberViewObserver {
     public static void main(final String... args) throws FileNotFoundException {
         new DrawNumberApp("config.yml", 
                 new DrawNumberViewImpl(),
-                new DrawNumberViewImpl(), 
-                new PrintStreamView(System.out),       
-                new PrintStreamView("output.log"));
+                new DrawNumberViewImpl(),
+                new PrintStreamView(System.out),
+                new PrintStreamView("output.txt"));
     }
 
 }
