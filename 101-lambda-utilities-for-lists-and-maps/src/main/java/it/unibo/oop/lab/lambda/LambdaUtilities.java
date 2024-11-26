@@ -90,8 +90,7 @@ public final class LambdaUtilities {
             result.addAll(newValue);
             return Collections.unmodifiableSet(result); 
             /*
-             * public static <E extends @Nullable java.lang.Object> Multiset<E> 
-             * union​(Multiset<? extends E> multiset1, Multiset<? extends E> multiset2)
+             * return Sets.union(oldvalue, newValue);
              */
         }));
         return mapResult; 
@@ -116,7 +115,7 @@ public final class LambdaUtilities {
          * Keep in mind that a map can be iterated through its forEach method
          */
         final Map<K, V> mapResult = new HashMap<>();
-        map.forEach((k, v) -> mapResult.put(k, v.orElse(def.get())));
+        map.forEach((k, v) -> mapResult.put(k, v.orElseGet(def)));
         return mapResult;
     }
 

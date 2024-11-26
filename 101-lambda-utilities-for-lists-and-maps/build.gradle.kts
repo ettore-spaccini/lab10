@@ -27,7 +27,7 @@ val mainClass: String by project
 
 application {
     // The following allows to run with: ./gradlew -PmainClass=it.unibo.oop.MyMainClass run
-    mainClass.set(project.properties["mainClass"].toString())
+    mainClass.set("it.unibo.oop.lab.lambda.LambdaUtilities")
 }
 
 val test by tasks.getting(Test::class) {
